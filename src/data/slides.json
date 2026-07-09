@@ -10,6 +10,17 @@
       "url_recurso": "/media/132486_4334866285220_2091382985_o.jpg",
       "titulo": "Coliseo Campaña",
       "id": 1
+    },
+    {
+      "descripcion": "Haz parte de esto",
+      "activo": true,
+      "mensaje_whatsapp": "Hola, quiero saber mas sobre la escuela biblica",
+      "tipo": "imagen",
+      "etiqueta": "2",
+      "subtitulo": "Vacacional",
+      "url_recurso": "/media/58b3f2ae-b5e5-4bbd-bef0-5ba617428742.jpeg",
+      "titulo": "Escuela biblica",
+      "id": 2
     }
   ]
 }
