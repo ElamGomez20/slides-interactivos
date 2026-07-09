@@ -1,8 +1,22 @@
 ﻿import { useEffect, useState } from "react";
 import "./App.css";
-import slides from "./data/slides.json";
+import slidesData from "./data/slides.json";
 
 const telefonoWhatsApp = "573161553896";
+
+const extensionesPermitidas = [".jpg", ".png", ".mp4"];
+
+const esRecursoPermitido = (url) => {
+    if (!url) return false;
+
+    const archivo = url.toLowerCase().split("?")[0];
+
+    return extensionesPermitidas.some((extension) => archivo.endsWith(extension));
+};
+
+const slides = slidesData.slides.filter((slide) => {
+    return slide.activo === true && esRecursoPermitido(slide.url_recurso);
+});
 
 function App() {
     const [slideActual, setSlideActual] = useState(0);
@@ -10,6 +24,7 @@ function App() {
 
     useEffect(() => {
         if (detalleAbierto) return;
+        if (slides.length === 0) return;
 
         const intervalo = setInterval(() => {
             setSlideActual((actual) => {
@@ -23,6 +38,30 @@ function App() {
 
         return () => clearInterval(intervalo);
     }, [detalleAbierto]);
+
+    if (slides.length === 0) {
+        return (
+            <main className="app">
+                <section className="telefono">
+                    <div className="barra-superior">
+                        <span>Slides Interactivos</span>
+                        <span>Sin contenido</span>
+                    </div>
+
+                    <div className="zona-slide">
+                        <div className="contenido-slide">
+                            <span className="etiqueta">Aviso</span>
+                            <h1>No hay slides disponibles</h1>
+                            <p>
+                                Revisa que los slides esten activos y que los archivos sean .jpg,
+                                .png o .mp4.
+                            </p>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        );
+    }
 
     const slide = slides[slideActual];
 
@@ -49,13 +88,30 @@ function App() {
     };
 
     const renderRecurso = (clase) => {
-        if (slide.tipo === "video") {
+        const archivo = slide.url_recurso.toLowerCase();
+
+        if (slide.tipo === "video" && archivo.endsWith(".mp4")) {
             return (
-                <video className={clase} src={slide.url_recurso} autoPlay muted loop playsInline />
+                <video
+                    className={clase}
+                    src={slide.url_recurso}
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                />
             );
         }
 
-        return <img className={clase} src={slide.url_recurso} alt={slide.titulo} />;
+        if (slide.tipo === "imagen" && (archivo.endsWith(".jpg") || archivo.endsWith(".png"))) {
+            return <img className={clase} src={slide.url_recurso} alt={slide.titulo} />;
+        }
+
+        return (
+            <div className={clase}>
+                Archivo no permitido
+            </div>
+        );
     };
 
     if (detalleAbierto) {

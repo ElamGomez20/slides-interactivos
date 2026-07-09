@@ -1,0 +1,66 @@
+backend:
+  name: git-gateway
+  branch: main
+
+media_folder: "public/media"
+public_folder: "/media"
+
+collections:
+  - name: "contenido"
+    label: "Contenido"
+    files:
+      - name: "slides"
+        label: "Slides de la pagina"
+        file: "src/data/slides.json"
+        format: "json"
+        fields:
+          - label: "Slides"
+            name: "slides"
+            widget: "list"
+            summary: "{{fields.titulo}}"
+            fields:
+              - label: "ID"
+                name: "id"
+                widget: "number"
+                value_type: "int"
+                min: 1
+
+              - label: "Activo"
+                name: "activo"
+                widget: "boolean"
+                default: true
+
+              - label: "Tipo de recurso"
+                name: "tipo"
+                widget: "select"
+                options:
+                  - label: "Imagen"
+                    value: "imagen"
+                  - label: "Video"
+                    value: "video"
+
+              - label: "Archivo multimedia"
+                name: "url_recurso"
+                widget: "file"
+                allow_multiple: false
+                hint: "Solo usar archivos .jpg, .png o .mp4"
+
+              - label: "Titulo"
+                name: "titulo"
+                widget: "string"
+
+              - label: "Subtitulo"
+                name: "subtitulo"
+                widget: "string"
+
+              - label: "Descripcion"
+                name: "descripcion"
+                widget: "text"
+
+              - label: "Mensaje de WhatsApp"
+                name: "mensaje_whatsapp"
+                widget: "text"
+
+              - label: "Etiqueta"
+                name: "etiqueta"
+                widget: "string"
