@@ -13,7 +13,7 @@
     },
     {
       "descripcion": "No tengo ni la mas remota idea pero estoy seguro de que es un video en formato MP4",
-      "activo": false,
+      "activo": true,
       "mensaje_whatsapp": "Lo que tu kieras prro",
       "tipo": "video",
       "etiqueta": "Comunicación",
