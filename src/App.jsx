@@ -1,10 +1,12 @@
 ﻿import { useEffect, useState } from "react";
 import "./App.css";
 import slidesData from "./data/slides.json";
+import configData from "./data/config.json";
 
 const telefonoWhatsApp = "573161553896";
 
 const extensionesPermitidas = [".jpg", ".png", ".mp4"];
+const extensionesLogoPermitidas = [".jpg", ".png"];
 
 const esRecursoPermitido = (url) => {
     if (!url) return false;
@@ -14,6 +16,14 @@ const esRecursoPermitido = (url) => {
     return extensionesPermitidas.some((extension) => archivo.endsWith(extension));
 };
 
+const esLogoPermitido = (url) => {
+    if (!url) return false;
+
+    const archivo = url.toLowerCase().split("?")[0];
+
+    return extensionesLogoPermitidas.some((extension) => archivo.endsWith(extension));
+};
+
 const slides = slidesData.slides.filter((slide) => {
     return slide.activo === true && esRecursoPermitido(slide.url_recurso);
 });
@@ -21,12 +31,44 @@ const slides = slidesData.slides.filter((slide) => {
 function App() {
     const [slideActual, setSlideActual] = useState(0);
     const [detalleAbierto, setDetalleAbierto] = useState(false);
+    const [direccion, setDireccion] = useState("derecha");
+    const [touchInicio, setTouchInicio] = useState(null);
+
+    const tituloSitio = configData.titulo_sitio || "CMB EL CERRITO";
+    const logoSitio = esLogoPermitido(configData.logo) ? configData.logo : "";
+
+    const cambiarSlide = (nuevoIndice, nuevaDireccion) => {
+        setDireccion(nuevaDireccion);
+        setSlideActual(nuevoIndice);
+    };
+
+    const irAlSiguiente = () => {
+        if (slides.length === 0) return;
+
+        if (slideActual === slides.length - 1) {
+            cambiarSlide(0, "derecha");
+        } else {
+            cambiarSlide(slideActual + 1, "derecha");
+        }
+    };
+
+    const irAlAnterior = () => {
+        if (slides.length === 0) return;
+
+        if (slideActual === 0) {
+            cambiarSlide(slides.length - 1, "izquierda");
+        } else {
+            cambiarSlide(slideActual - 1, "izquierda");
+        }
+    };
 
     useEffect(() => {
         if (detalleAbierto) return;
         if (slides.length === 0) return;
 
         const intervalo = setInterval(() => {
+            setDireccion("derecha");
+
             setSlideActual((actual) => {
                 if (actual === slides.length - 1) {
                     return 0;
@@ -39,12 +81,36 @@ function App() {
         return () => clearInterval(intervalo);
     }, [detalleAbierto]);
 
+    const iniciarTouch = (event) => {
+        setTouchInicio(event.touches[0].clientX);
+    };
+
+    const terminarTouch = (event) => {
+        if (touchInicio === null) return;
+
+        const touchFinal = event.changedTouches[0].clientX;
+        const diferencia = touchInicio - touchFinal;
+
+        if (diferencia > 50) {
+            irAlSiguiente();
+        }
+
+        if (diferencia < -50) {
+            irAlAnterior();
+        }
+
+        setTouchInicio(null);
+    };
+
     if (slides.length === 0) {
         return (
             <main className="app">
                 <section className="telefono">
                     <div className="barra-superior">
-                        <span>Slides Interactivos</span>
+                        <div className="marca">
+                            {logoSitio && <img src={logoSitio} alt="Logo" />}
+                            <span>{tituloSitio}</span>
+                        </div>
                         <span>Sin contenido</span>
                     </div>
 
@@ -64,22 +130,6 @@ function App() {
     }
 
     const slide = slides[slideActual];
-
-    const irAlSiguiente = () => {
-        if (slideActual === slides.length - 1) {
-            setSlideActual(0);
-        } else {
-            setSlideActual(slideActual + 1);
-        }
-    };
-
-    const irAlAnterior = () => {
-        if (slideActual === 0) {
-            setSlideActual(slides.length - 1);
-        } else {
-            setSlideActual(slideActual - 1);
-        }
-    };
 
     const abrirWhatsApp = () => {
         const mensaje = encodeURIComponent(slide.mensaje_whatsapp);
@@ -103,15 +153,14 @@ function App() {
             );
         }
 
-        if (slide.tipo === "imagen" && (archivo.endsWith(".jpg") || archivo.endsWith(".png"))) {
+        if (
+            slide.tipo === "imagen" &&
+            (archivo.endsWith(".jpg") || archivo.endsWith(".png"))
+        ) {
             return <img className={clase} src={slide.url_recurso} alt={slide.titulo} />;
         }
 
-        return (
-            <div className={clase}>
-                Archivo no permitido
-            </div>
-        );
+        return <div className={clase}>Archivo no permitido</div>;
     };
 
     if (detalleAbierto) {
@@ -123,11 +172,14 @@ function App() {
                     </button>
 
                     <div className="detalle-card">
+                        <div className="marca marca-detalle">
+                            {logoSitio && <img src={logoSitio} alt="Logo" />}
+                            <span>{tituloSitio}</span>
+                        </div>
+
                         <span className="etiqueta">{slide.etiqueta}</span>
 
-                        <div className="detalle-media">
-                            {renderRecurso("media-detalle")}
-                        </div>
+                        <div className="detalle-media">{renderRecurso("media-detalle")}</div>
 
                         <h1>{slide.titulo}</h1>
                         <h2>{slide.subtitulo}</h2>
@@ -146,14 +198,24 @@ function App() {
         <main className="app">
             <section className="telefono">
                 <div className="barra-superior">
-                    <span>Slides Interactivos</span>
-                    <span>{slideActual + 1}/{slides.length}</span>
+                    <div className="marca">
+                        {logoSitio && <img src={logoSitio} alt="Logo" />}
+                        <span>{tituloSitio}</span>
+                    </div>
+
+                    <span>
+                        {slideActual + 1}/{slides.length}
+                    </span>
                 </div>
 
-                <button className="zona-slide" onClick={() => setDetalleAbierto(true)}>
-                    <div className="slide-media">
-                        {renderRecurso("media-slide")}
-                    </div>
+                <button
+                    key={slide.id}
+                    className={`zona-slide animacion-${direccion}`}
+                    onClick={() => setDetalleAbierto(true)}
+                    onTouchStart={iniciarTouch}
+                    onTouchEnd={terminarTouch}
+                >
+                    <div className="slide-media">{renderRecurso("media-slide")}</div>
 
                     <div className="contenido-slide">
                         <span className="etiqueta">{slide.etiqueta}</span>
@@ -173,7 +235,10 @@ function App() {
                         <button
                             key={item.id}
                             className={index === slideActual ? "punto activo" : "punto"}
-                            onClick={() => setSlideActual(index)}
+                            onClick={() => {
+                                const nuevaDireccion = index > slideActual ? "derecha" : "izquierda";
+                                cambiarSlide(index, nuevaDireccion);
+                            }}
                         />
                     ))}
                 </div>

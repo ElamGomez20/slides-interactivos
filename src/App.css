@@ -279,3 +279,63 @@ button {
         max-width: 460px;
     }
 }
+
+.marca {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    min-width: 0;
+}
+
+    .marca img {
+        width: 34px;
+        height: 34px;
+        border-radius: 999px;
+        object-fit: cover;
+        background: white;
+    }
+
+    .marca span {
+        font-weight: 800;
+        letter-spacing: 0.3px;
+        color: #ffffff;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+.marca-detalle {
+    margin-bottom: 18px;
+}
+
+.animacion-derecha {
+    animation: entrarDesdeDerecha 0.45s ease both;
+}
+
+.animacion-izquierda {
+    animation: entrarDesdeIzquierda 0.45s ease both;
+}
+
+@keyframes entrarDesdeDerecha {
+    from {
+        opacity: 0;
+        transform: translateX(35px) scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
+}
+
+@keyframes entrarDesdeIzquierda {
+    from {
+        opacity: 0;
+        transform: translateX(-35px) scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
+}

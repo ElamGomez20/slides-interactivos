@@ -9,6 +9,22 @@ collections:
   - name: "contenido"
     label: "Contenido"
     files:
+      - name: "configuracion"
+        label: "Configuracion general"
+        file: "src/data/config.json"
+        format: "json"
+        fields:
+          - label: "Titulo del sitio"
+            name: "titulo_sitio"
+            widget: "string"
+            default: "CMB EL CERRITO"
+
+          - label: "Logo de la iglesia"
+            name: "logo"
+            widget: "file"
+            allow_multiple: false
+            hint: "Solo usar imagen .jpg o .png"
+
       - name: "slides"
         label: "Slides de la pagina"
         file: "src/data/slides.json"
