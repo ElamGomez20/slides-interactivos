@@ -25,6 +25,34 @@ collections:
             allow_multiple: false
             hint: "Solo usar imagen .jpg o .png"
 
+          - label: "Contactos de WhatsApp"
+            name: "contactos_whatsapp"
+            widget: "list"
+            min: 4
+            max: 4
+            fields:
+              - label: "ID interno"
+                name: "id"
+                widget: "select"
+                options:
+                  - label: "CMB GENERAL"
+                    value: "cmb_general"
+                  - label: "Escuela Biblica"
+                    value: "escuela_biblica"
+                  - label: "Obra Social"
+                    value: "obra_social"
+                  - label: "Jovenes"
+                    value: "jovenes"
+
+              - label: "Nombre del area"
+                name: "nombre"
+                widget: "string"
+
+              - label: "Numero de WhatsApp"
+                name: "numero"
+                widget: "string"
+                hint: "Usar formato internacional sin + ni espacios. Ejemplo: 573185384697"
+
       - name: "slides"
         label: "Slides de la pagina"
         file: "src/data/slides.json"
@@ -76,6 +104,20 @@ collections:
               - label: "Mensaje de WhatsApp"
                 name: "mensaje_whatsapp"
                 widget: "text"
+
+              - label: "Contacto de WhatsApp"
+                name: "contacto_whatsapp"
+                widget: "select"
+                default: "cmb_general"
+                options:
+                  - label: "CMB GENERAL"
+                    value: "cmb_general"
+                  - label: "Escuela Biblica"
+                    value: "escuela_biblica"
+                  - label: "Obra Social"
+                    value: "obra_social"
+                  - label: "Jovenes"
+                    value: "jovenes"
 
               - label: "Etiqueta"
                 name: "etiqueta"

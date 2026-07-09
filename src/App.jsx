@@ -3,8 +3,6 @@ import "./App.css";
 import slidesData from "./data/slides.json";
 import configData from "./data/config.json";
 
-const telefonoWhatsApp = "573161553896";
-
 const extensionesPermitidas = [".jpg", ".png", ".mp4"];
 const extensionesLogoPermitidas = [".jpg", ".png"];
 
@@ -24,8 +22,28 @@ const esLogoPermitido = (url) => {
     return extensionesLogoPermitidas.some((extension) => archivo.endsWith(extension));
 };
 
+const obtenerContactoWhatsApp = (slide) => {
+    const contactos = configData.contactos_whatsapp || [];
+
+    const contactoEncontrado = contactos.find((contacto) => {
+        return contacto.id === slide.contacto_whatsapp;
+    });
+
+    if (contactoEncontrado && contactoEncontrado.numero) {
+        return contactoEncontrado.numero;
+    }
+
+    if (contactos.length > 0 && contactos[0].numero) {
+        return contactos[0].numero;
+    }
+
+    return "573185384697";
+};
+
 const slides = slidesData.slides.filter((slide) => {
-    return slide.activo === true && esRecursoPermitido(slide.url_recurso);
+    const estaActivo = slide.activo !== false;
+
+    return estaActivo && esRecursoPermitido(slide.url_recurso);
 });
 
 function App() {
@@ -132,8 +150,10 @@ function App() {
     const slide = slides[slideActual];
 
     const abrirWhatsApp = () => {
+        const telefonoDestino = obtenerContactoWhatsApp(slide);
         const mensaje = encodeURIComponent(slide.mensaje_whatsapp);
-        const url = `https://wa.me/${telefonoWhatsApp}?text=${mensaje}`;
+        const url = `https://wa.me/${telefonoDestino}?text=${mensaje}`;
+
         window.open(url, "_blank");
     };
 

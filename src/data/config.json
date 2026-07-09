@@ -1,4 +1,26 @@
 {
   "titulo_sitio": "CMB EL CERRITO",
-  "logo": "/media/logo.png"
+  "logo": "/media/logo.png",
+  "contactos_whatsapp": [
+    {
+      "id": "cmb_general",
+      "nombre": "CMB GENERAL",
+      "numero": "573185384697"
+    },
+    {
+      "id": "escuela_biblica",
+      "nombre": "Escuela Biblica",
+      "numero": "573176784539"
+    },
+    {
+      "id": "obra_social",
+      "nombre": "Obra Social",
+      "numero": "573113252349"
+    },
+    {
+      "id": "jovenes",
+      "nombre": "Jovenes",
+      "numero": "573237049379"
+    }
+  ]
 }
