@@ -1,0 +1,32 @@
+[
+  {
+    "id": 1,
+    "tipo": "imagen",
+    "url_recurso": "/media/slide1.jpg",
+    "titulo": "Diseno Web Corporativo",
+    "subtitulo": "Sitios modernos para empresas",
+    "descripcion": "Creamos paginas web elegantes, rapidas y adaptadas a celulares para que tus clientes puedan conocer tus servicios desde cualquier lugar.",
+    "mensaje_whatsapp": "Hola, quiero conocer mas sobre el servicio de Diseno Web Corporativo.",
+    "etiqueta": "Servicio destacado"
+  },
+  {
+    "id": 2,
+    "tipo": "imagen",
+    "url_recurso": "/media/slide2.jpg",
+    "titulo": "Identidad de Marca",
+    "subtitulo": "Haz que tu empresa se vea profesional",
+    "descripcion": "Disenamos logotipos, paletas de color, piezas graficas y estilos visuales para que tu marca tenga una presencia clara y memorable.",
+    "mensaje_whatsapp": "Hola, quiero conocer mas sobre el servicio de Identidad de Marca.",
+    "etiqueta": "Branding"
+  },
+  {
+    "id": 3,
+    "tipo": "video",
+    "url_recurso": "/media/video1.mp4",
+    "titulo": "Publicidad Digital",
+    "subtitulo": "Promociones listas para vender",
+    "descripcion": "Creamos piezas publicitarias para redes sociales, pantallas, campanas y anuncios pensados para llamar la atencion de tus clientes.",
+    "mensaje_whatsapp": "Hola, quiero conocer mas sobre el servicio de Publicidad Digital.",
+    "etiqueta": "Marketing"
+  }
+]
