@@ -1,26 +1,3 @@
 {
-  "slides": [
-    {
-      "descripcion": "Asiste a este tiempo de predica y evangelismo. Trae a tus invitados y familiares.",
-      "activo": true,
-      "mensaje_whatsapp": "Hola, quiero saber mas sobre Este evento",
-      "tipo": "imagen",
-      "etiqueta": "Numero 1",
-      "subtitulo": "NO FALTES",
-      "url_recurso": "/media/132486_4334866285220_2091382985_o.jpg",
-      "titulo": "Coliseo Campaña",
-      "id": 1
-    },
-    {
-      "descripcion": "No tengo ni la mas remota idea pero estoy seguro de que es un video en formato MP4",
-      "activo": true,
-      "mensaje_whatsapp": "Lo que tu kieras prro",
-      "tipo": "video",
-      "etiqueta": "Comunicación",
-      "subtitulo": "Tampoco se",
-      "url_recurso": "/media/añadir-un-título-1920-x-1080-px-.mp4",
-      "titulo": "No se",
-      "id": 2
-    }
-  ]
+  "slides": []
 }
