@@ -3,7 +3,7 @@
     {
       "contacto_whatsapp": "jovenes",
       "descripcion": "Una invitación especial para todos los jovenes. Dios quiere hacer algo poderoso y diferente en tu vida. Este es un tiempo para gozarte, aprender y llenarnos del Fuego de Dios.",
-      "activo": true,
+      "activo": false,
       "mensaje_whatsapp": "Hola, quiero saber mas sobre el campamento Juvenil…",
       "tipo": "imagen",
       "etiqueta": "Jovenes",
