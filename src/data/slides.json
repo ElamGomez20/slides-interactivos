@@ -1,3 +1,16 @@
 {
-  "slides": []
+  "slides": [
+    {
+      "contacto_whatsapp": "jovenes",
+      "descripcion": "Una invitación especial para todos los jovenes. Dios quiere hacer algo poderoso y diferente en tu vida. Este es un tiempo para gozarte, aprender y llenarnos del Fuego de Dios.",
+      "activo": true,
+      "mensaje_whatsapp": "Hola, quiero saber mas sobre el campamento Juvenil…",
+      "tipo": "imagen",
+      "etiqueta": "Jovenes",
+      "subtitulo": "FERVIENTES",
+      "url_recurso": "/media/444879e7-e308-41cc-95a4-a4de199e0f87.jpeg",
+      "titulo": "CAMPAMENTO JUVENIL 2026",
+      "id": 1
+    }
+  ]
 }
