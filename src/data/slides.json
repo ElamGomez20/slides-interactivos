@@ -1,16 +1,28 @@
 {
   "slides": [
     {
-      "contacto_whatsapp": "jovenes",
-      "descripcion": "Una invitación especial para todos los jovenes. Dios quiere hacer algo poderoso y diferente en tu vida. Este es un tiempo para gozarte, aprender y llenarnos del Fuego de Dios.",
+      "contacto_whatsapp": "escuela_biblica",
+      "descripcion": "Ven a nuestra semana vacacional infantil. Será un tiempo de creatividad, descubrimiento y aprendizaje de la palabra de Dios... No dejes pasar esta oportunidad. ¡INSCRIBETE YA!",
       "activo": true,
-      "mensaje_whatsapp": "Hola, quiero saber mas sobre el campamento Juvenil…",
+      "mensaje_whatsapp": "Hola, quiero saber mas sobre la semana Vacacional Infantil…",
       "tipo": "imagen",
-      "etiqueta": "Jovenes",
-      "subtitulo": "FERVIENTES",
+      "etiqueta": "CMB KIDS",
+      "subtitulo": "INFANTIL",
       "url_recurso": "/media/fervientes.png",
-      "titulo": "CAMPAMENTO JUVENIL 2026",
+      "titulo": "SEMANA VACACIONAL",
       "id": 1
+    },
+    {
+      "id": 2,
+      "activo": true,
+      "tipo": "imagen",
+      "url_recurso": "/media/slide-nuevo.jpg",
+      "titulo": "Nuevo slide",
+      "subtitulo": "Subtitulo del slide",
+      "descripcion": "Descripcion del contenido.",
+      "mensaje_whatsapp": "Hola, quiero recibir mas informacion.",
+      "contacto_whatsapp": "cmb_general",
+      "etiqueta": "Nuevo"
     }
   ]
 }
