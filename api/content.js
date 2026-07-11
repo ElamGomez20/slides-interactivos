@@ -1,4 +1,4 @@
-﻿const owner = process.env.GITHUB_OWNER;
+const owner = process.env.GITHUB_OWNER;
 const repo = process.env.GITHUB_REPO;
 const branch = process.env.GITHUB_BRANCH || "main";
 const githubToken = process.env.GITHUB_TOKEN;
@@ -21,9 +21,9 @@ const validarVariables = () => {
 };
 
 const githubHeaders = {
-    Authorization: `Bearer ${githubToken}`,
+    Authorization: Bearer ${ githubToken },
     Accept: "application/vnd.github+json",
-    "X-GitHub-Api-Version": "2022-11-28",
+"X-GitHub-Api-Version": "2022-11-28",
 };
 
 const validarPassword = (req) => {
@@ -32,7 +32,7 @@ const validarPassword = (req) => {
 };
 
 const obtenerArchivo = async (path) => {
-    const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}?ref=${branch}`;
+    const url = https://api.github.com/repos/${owner}/${repo}/contents/${path}?ref=${branch};
 
     const respuesta = await fetch(url, {
         method: "GET",
@@ -41,7 +41,7 @@ const obtenerArchivo = async (path) => {
 
     if (!respuesta.ok) {
         const errorTexto = await respuesta.text();
-        throw new Error(`No se pudo leer ${path}. GitHub respondio: ${respuesta.status} ${errorTexto}`);
+        throw new Error(No se pudo leer ${ path }.GitHub respondio: ${ respuesta.status } ${ errorTexto });
     }
 
     const data = await respuesta.json();
@@ -63,7 +63,7 @@ const guardarArchivoTexto = async (path, content, message) => {
         sha = null;
     }
 
-    const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+    const url = https://api.github.com/repos/${owner}/${repo}/contents/${path};
 
     const body = {
         message,
@@ -83,7 +83,7 @@ const guardarArchivoTexto = async (path, content, message) => {
 
     if (!respuesta.ok) {
         const errorTexto = await respuesta.text();
-        throw new Error(`No se pudo guardar ${path}. GitHub respondio: ${respuesta.status} ${errorTexto}`);
+        throw new Error(No se pudo guardar ${ path }.GitHub respondio: ${ respuesta.status } ${ errorTexto });
     }
 
     return respuesta.json();
@@ -99,7 +99,7 @@ const guardarArchivoBase64 = async (path, contentBase64, message) => {
         sha = null;
     }
 
-    const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+    const url = https://api.github.com/repos/${owner}/${repo}/contents/${path};
 
     const body = {
         message,
@@ -119,7 +119,7 @@ const guardarArchivoBase64 = async (path, contentBase64, message) => {
 
     if (!respuesta.ok) {
         const errorTexto = await respuesta.text();
-        throw new Error(`No se pudo subir ${path}. GitHub respondio: ${respuesta.status} ${errorTexto}`);
+        throw new Error(No se pudo subir ${ path }.GitHub respondio: ${ respuesta.status } ${ errorTexto });
     }
 
     return respuesta.json();
@@ -142,83 +142,83 @@ export default async function handler(req, res) {
         if (variablesFaltantes.length > 0) {
             return responder(res, 500, {
                 ok: false,
-                message: `Faltan variables en Vercel: ${variablesFaltantes.join(", ")}`,
+                message: Faltan variables en Vercel: ${ variablesFaltantes.join(", ") },
             });
-        }
+    }
 
         if (!validarPassword(req)) {
-            return responder(res, 401, {
+        return responder(res, 401, {
+            ok: false,
+            message: "Password incorrecto",
+        });
+    }
+
+    if (req.method === "GET") {
+        const configFile = await obtenerArchivo("src/data/config.json");
+        const slidesFile = await obtenerArchivo("src/data/slides.json");
+
+        return responder(res, 200, {
+            ok: true,
+            config: JSON.parse(configFile.content),
+            slides: JSON.parse(slidesFile.content),
+        });
+    }
+
+    if (req.method === "POST") {
+        const body = obtenerBody(req);
+
+        const config = body.config;
+        const slides = body.slides;
+        const mediaFiles = body.mediaFiles || [];
+
+        if (!config || !slides) {
+            return responder(res, 400, {
                 ok: false,
-                message: "Password incorrecto",
+                message: "Faltan datos para guardar",
             });
         }
 
-        if (req.method === "GET") {
-            const configFile = await obtenerArchivo("src/data/config.json");
-            const slidesFile = await obtenerArchivo("src/data/slides.json");
-
-            return responder(res, 200, {
-                ok: true,
-                config: JSON.parse(configFile.content),
-                slides: JSON.parse(slidesFile.content),
-            });
-        }
-
-        if (req.method === "POST") {
-            const body = obtenerBody(req);
-
-            const config = body.config;
-            const slides = body.slides;
-            const mediaFiles = body.mediaFiles || [];
-
-            if (!config || !slides) {
+        for (const file of mediaFiles) {
+            if (!file.path || !file.contentBase64) {
                 return responder(res, 400, {
                     ok: false,
-                    message: "Faltan datos para guardar",
+                    message: "Hay un archivo multimedia incompleto",
                 });
             }
 
-            for (const file of mediaFiles) {
-                if (!file.path || !file.contentBase64) {
-                    return responder(res, 400, {
-                        ok: false,
-                        message: "Hay un archivo multimedia incompleto",
-                    });
-                }
-
-                await guardarArchivoBase64(
-                    file.path,
-                    file.contentBase64,
-                    `Subir archivo multimedia ${file.path}`
-                );
-            }
-
-            await guardarArchivoTexto(
-                "src/data/config.json",
-                JSON.stringify(config, null, 2),
-                "Actualizar configuracion general"
+            await guardarArchivoBase64(
+                file.path,
+                file.contentBase64,
+                Subir archivo multimedia ${ file.path }
             );
-
-            await guardarArchivoTexto(
-                "src/data/slides.json",
-                JSON.stringify(slides, null, 2),
-                "Actualizar slides desde panel admin"
-            );
-
-            return responder(res, 200, {
-                ok: true,
-                message: "Cambios guardados correctamente",
-            });
         }
 
-        return responder(res, 405, {
-            ok: false,
-            message: "Metodo no permitido",
-        });
-    } catch (error) {
-        return responder(res, 500, {
-            ok: false,
-            message: error.message || "Error interno",
+        await guardarArchivoTexto(
+            "src/data/config.json",
+            JSON.stringify(config, null, 2),
+            "Actualizar configuracion general"
+        );
+
+        await guardarArchivoTexto(
+            "src/data/slides.json",
+            JSON.stringify(slides, null, 2),
+            "Actualizar slides desde panel admin"
+        );
+
+        return responder(res, 200, {
+            ok: true,
+            message: "Cambios guardados correctamente",
         });
     }
+
+    return responder(res, 405, {
+        ok: false,
+        message: "Metodo no permitido",
+    });
+} catch (error) {
+    return responder(res, 500, {
+        ok: false,
+        message: error.message || "Error interno",
+    });
+}
 }
