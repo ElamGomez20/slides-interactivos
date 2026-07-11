@@ -1,0 +1,198 @@
+﻿.admin-page {
+    min-height: 100vh;
+    background: #08111f;
+    color: white;
+    padding: 24px;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.admin-login {
+    width: 100%;
+    max-width: 420px;
+    margin: 80px auto;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 24px;
+    padding: 24px;
+}
+
+    .admin-login h1,
+    .admin-header h1 {
+        margin: 0 0 8px;
+    }
+
+    .admin-login p,
+    .admin-header p {
+        color: #c9d6ea;
+        margin: 0 0 18px;
+    }
+
+    .admin-login input,
+    .admin-card input,
+    .admin-card textarea,
+    .admin-card select {
+        width: 100%;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 14px;
+        padding: 12px;
+        background: rgba(255, 255, 255, 0.09);
+        color: white;
+        font-size: 15px;
+    }
+
+        .admin-card select option {
+            color: black;
+        }
+
+    .admin-login button,
+    .admin-card button,
+    .guardar-flotante button,
+    .btn-secundario {
+        border: none;
+        border-radius: 14px;
+        padding: 12px 16px;
+        background: white;
+        color: #08111f;
+        font-weight: 800;
+        cursor: pointer;
+    }
+
+    .admin-login button {
+        width: 100%;
+        margin-top: 14px;
+    }
+
+.admin-estado {
+    display: block;
+    margin-top: 14px;
+    color: #9bd3ff;
+}
+
+.admin-header {
+    max-width: 980px;
+    margin: 0 auto 20px;
+    display: flex;
+    justify-content: space-between;
+    gap: 18px;
+    align-items: center;
+}
+
+.btn-secundario {
+    background: rgba(255, 255, 255, 0.12);
+    color: white;
+}
+
+.admin-card {
+    max-width: 980px;
+    margin: 0 auto 20px;
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 22px;
+    padding: 22px;
+}
+
+    .admin-card h2 {
+        margin: 0 0 18px;
+    }
+
+    .admin-card label {
+        display: block;
+        margin-bottom: 14px;
+        color: #dce8ff;
+        font-weight: 700;
+    }
+
+    .admin-card input,
+    .admin-card textarea,
+    .admin-card select {
+        margin-top: 7px;
+    }
+
+    .admin-card textarea {
+        min-height: 90px;
+        resize: vertical;
+    }
+
+.admin-card-title,
+.slide-editor-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    align-items: center;
+}
+
+.contacto-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+
+.slide-editor {
+    margin-top: 18px;
+    padding: 18px;
+    border-radius: 18px;
+    background: rgba(0, 0, 0, 0.22);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+    .slide-editor h3 {
+        margin: 0;
+    }
+
+.check-row {
+    display: flex !important;
+    align-items: center;
+    gap: 10px;
+}
+
+    .check-row input {
+        width: auto;
+    }
+
+.ruta-archivo {
+    margin: -4px 0 14px;
+    color: #9bd3ff;
+    font-size: 13px;
+    word-break: break-all;
+}
+
+.btn-peligro {
+    background: #ff5b5b !important;
+    color: white !important;
+}
+
+.guardar-flotante {
+    position: sticky;
+    bottom: 0;
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 16px;
+    border-radius: 18px 18px 0 0;
+    background: rgba(8, 17, 31, 0.96);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    display: flex;
+    gap: 14px;
+    align-items: center;
+}
+
+    .guardar-flotante span {
+        color: #9bd3ff;
+    }
+
+@media (max-width: 700px) {
+    .admin-page {
+        padding: 14px;
+    }
+
+    .admin-header,
+    .admin-card-title,
+    .slide-editor-header,
+    .guardar-flotante {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .contacto-grid {
+        grid-template-columns: 1fr;
+    }
+}

@@ -2,6 +2,7 @@
 import "./App.css";
 import slidesData from "./data/slides.json";
 import configData from "./data/config.json";
+import AdminPanel from "./components/AdminPanel";
 
 const extensionesPermitidas = [".jpg", ".png", ".mp4"];
 const extensionesLogoPermitidas = [".jpg", ".png"];
@@ -47,6 +48,14 @@ const slides = slidesData.slides.filter((slide) => {
 });
 
 function App() {
+    if (window.location.pathname.startsWith("/admin")) {
+        return <AdminPanel />;
+    }
+
+    return <PaginaPrincipal />;
+}
+
+function PaginaPrincipal() {
     const [slideActual, setSlideActual] = useState(0);
     const [detalleAbierto, setDetalleAbierto] = useState(false);
     const [direccion, setDireccion] = useState("derecha");
