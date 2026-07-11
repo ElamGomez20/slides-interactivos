@@ -4,19 +4,30 @@ const branch = process.env.GITHUB_BRANCH || "main";
 const githubToken = process.env.GITHUB_TOKEN;
 const adminPassword = process.env.ADMIN_PASSWORD;
 
+const responder = (res, status, data) => {
+  res.status(status).json(data);
+};
+
+const validarVariables = () => {
+  const faltantes = [];
+
+  if (!owner) faltantes.push("GITHUB_OWNER");
+  if (!repo) faltantes.push("GITHUB_REPO");
+  if (!branch) faltantes.push("GITHUB_BRANCH");
+  if (!githubToken) faltantes.push("GITHUB_TOKEN");
+  if (!adminPassword) faltantes.push("ADMIN_PASSWORD");
+
+  return faltantes;
+};
+
 const githubHeaders = {
   Authorization: `Bearer ${githubToken}`,
   Accept: "application/vnd.github+json",
   "X-GitHub-Api-Version": "2022-11-28",
 };
 
-const responder = (res, status, data) => {
-  res.status(status).json(data);
-};
-
 const validarPassword = (req) => {
   const password = req.headers["x-admin-password"];
-
   return password && password === adminPassword;
 };
 
@@ -29,7 +40,8 @@ const obtenerArchivo = async (path) => {
   });
 
   if (!respuesta.ok) {
-    throw new Error(`No se pudo leer ${path}`);
+    const errorTexto = await respuesta.text();
+    throw new Error(`No se pudo leer ${path}. GitHub respondio: ${respuesta.status} ${errorTexto}`);
   }
 
   const data = await respuesta.json();
@@ -70,8 +82,8 @@ const guardarArchivoTexto = async (path, content, message) => {
   });
 
   if (!respuesta.ok) {
-    const error = await respuesta.text();
-    throw new Error(error);
+    const errorTexto = await respuesta.text();
+    throw new Error(`No se pudo guardar ${path}. GitHub respondio: ${respuesta.status} ${errorTexto}`);
   }
 
   return respuesta.json();
@@ -106,8 +118,8 @@ const guardarArchivoBase64 = async (path, contentBase64, message) => {
   });
 
   if (!respuesta.ok) {
-    const error = await respuesta.text();
-    throw new Error(error);
+    const errorTexto = await respuesta.text();
+    throw new Error(`No se pudo subir ${path}. GitHub respondio: ${respuesta.status} ${errorTexto}`);
   }
 
   return respuesta.json();
@@ -125,6 +137,15 @@ const obtenerBody = (req) => {
 
 export default async function handler(req, res) {
   try {
+    const variablesFaltantes = validarVariables();
+
+    if (variablesFaltantes.length > 0) {
+      return responder(res, 500, {
+        ok: false,
+        message: `Faltan variables en Vercel: ${variablesFaltantes.join(", ")}`,
+      });
+    }
+
     if (!validarPassword(req)) {
       return responder(res, 401, {
         ok: false,
@@ -158,6 +179,13 @@ export default async function handler(req, res) {
       }
 
       for (const file of mediaFiles) {
+        if (!file.path || !file.contentBase64) {
+          return responder(res, 400, {
+            ok: false,
+            message: "Hay un archivo multimedia incompleto",
+          });
+        }
+
         await guardarArchivoBase64(
           file.path,
           file.contentBase64,
