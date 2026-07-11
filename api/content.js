@@ -1,11 +1,19 @@
+import { Buffer } from "node:buffer";
+
 const owner = process.env.GITHUB_OWNER;
 const repo = process.env.GITHUB_REPO;
 const branch = process.env.GITHUB_BRANCH || "main";
 const githubToken = process.env.GITHUB_TOKEN;
 const adminPassword = process.env.ADMIN_PASSWORD;
 
-const responder = (res, status, data) => {
-    res.status(status).json(data);
+const json = (data, status = 200) => {
+    return new Response(JSON.stringify(data), {
+        status,
+        headers: {
+            "Content-Type": "application/json",
+            "Cache-Control": "no-store",
+        },
+    });
 };
 
 const validarVariables = () => {
@@ -20,28 +28,33 @@ const validarVariables = () => {
     return faltantes;
 };
 
-const githubHeaders = {
-    Authorization: Bearer ${ githubToken },
-    Accept: "application/vnd.github+json",
-"X-GitHub-Api-Version": "2022-11-28",
+const crearHeadersGithub = () => {
+    return {
+        Authorization: `Bearer ${githubToken}`,
+        Accept: "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+    };
 };
 
-const validarPassword = (req) => {
-    const password = req.headers["x-admin-password"];
+const validarPassword = (request) => {
+    const password = request.headers.get("x-admin-password");
     return password && password === adminPassword;
 };
 
 const obtenerArchivo = async (path) => {
-    const url = https://api.github.com/repos/${owner}/${repo}/contents/${path}?ref=${branch};
+    const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}?ref=${branch}`;
 
     const respuesta = await fetch(url, {
         method: "GET",
-        headers: githubHeaders,
+        headers: crearHeadersGithub(),
     });
 
     if (!respuesta.ok) {
         const errorTexto = await respuesta.text();
-        throw new Error(No se pudo leer ${ path }.GitHub respondio: ${ respuesta.status } ${ errorTexto });
+
+        throw new Error(
+            `No se pudo leer ${path}. GitHub respondio: ${respuesta.status} ${errorTexto}`
+        );
     }
 
     const data = await respuesta.json();
@@ -63,7 +76,7 @@ const guardarArchivoTexto = async (path, content, message) => {
         sha = null;
     }
 
-    const url = https://api.github.com/repos/${owner}/${repo}/contents/${path};
+    const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
 
     const body = {
         message,
@@ -77,13 +90,16 @@ const guardarArchivoTexto = async (path, content, message) => {
 
     const respuesta = await fetch(url, {
         method: "PUT",
-        headers: githubHeaders,
+        headers: crearHeadersGithub(),
         body: JSON.stringify(body),
     });
 
     if (!respuesta.ok) {
         const errorTexto = await respuesta.text();
-        throw new Error(No se pudo guardar ${ path }.GitHub respondio: ${ respuesta.status } ${ errorTexto });
+
+        throw new Error(
+            `No se pudo guardar ${path}. GitHub respondio: ${respuesta.status} ${errorTexto}`
+        );
     }
 
     return respuesta.json();
@@ -99,7 +115,7 @@ const guardarArchivoBase64 = async (path, contentBase64, message) => {
         sha = null;
     }
 
-    const url = https://api.github.com/repos/${owner}/${repo}/contents/${path};
+    const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
 
     const body = {
         message,
@@ -113,112 +129,133 @@ const guardarArchivoBase64 = async (path, contentBase64, message) => {
 
     const respuesta = await fetch(url, {
         method: "PUT",
-        headers: githubHeaders,
+        headers: crearHeadersGithub(),
         body: JSON.stringify(body),
     });
 
     if (!respuesta.ok) {
         const errorTexto = await respuesta.text();
-        throw new Error(No se pudo subir ${ path }.GitHub respondio: ${ respuesta.status } ${ errorTexto });
+
+        throw new Error(
+            `No se pudo subir ${path}. GitHub respondio: ${respuesta.status} ${errorTexto}`
+        );
     }
 
     return respuesta.json();
 };
 
-const obtenerBody = (req) => {
-    if (!req.body) return {};
+const manejarGet = async () => {
+    const configFile = await obtenerArchivo("src/data/config.json");
+    const slidesFile = await obtenerArchivo("src/data/slides.json");
 
-    if (typeof req.body === "string") {
-        return JSON.parse(req.body);
-    }
-
-    return req.body;
+    return json({
+        ok: true,
+        config: JSON.parse(configFile.content),
+        slides: JSON.parse(slidesFile.content),
+    });
 };
 
-export default async function handler(req, res) {
-    try {
-        const variablesFaltantes = validarVariables();
+const manejarPost = async (request) => {
+    const body = await request.json();
 
-        if (variablesFaltantes.length > 0) {
-            return responder(res, 500, {
-                ok: false,
-                message: Faltan variables en Vercel: ${ variablesFaltantes.join(", ") },
-            });
-    }
+    const config = body.config;
+    const slides = body.slides;
+    const mediaFiles = body.mediaFiles || [];
 
-        if (!validarPassword(req)) {
-        return responder(res, 401, {
-            ok: false,
-            message: "Password incorrecto",
-        });
-    }
-
-    if (req.method === "GET") {
-        const configFile = await obtenerArchivo("src/data/config.json");
-        const slidesFile = await obtenerArchivo("src/data/slides.json");
-
-        return responder(res, 200, {
-            ok: true,
-            config: JSON.parse(configFile.content),
-            slides: JSON.parse(slidesFile.content),
-        });
-    }
-
-    if (req.method === "POST") {
-        const body = obtenerBody(req);
-
-        const config = body.config;
-        const slides = body.slides;
-        const mediaFiles = body.mediaFiles || [];
-
-        if (!config || !slides) {
-            return responder(res, 400, {
+    if (!config || !slides) {
+        return json(
+            {
                 ok: false,
                 message: "Faltan datos para guardar",
-            });
-        }
+            },
+            400
+        );
+    }
 
-        for (const file of mediaFiles) {
-            if (!file.path || !file.contentBase64) {
-                return responder(res, 400, {
+    for (const file of mediaFiles) {
+        if (!file.path || !file.contentBase64) {
+            return json(
+                {
                     ok: false,
                     message: "Hay un archivo multimedia incompleto",
-                });
-            }
-
-            await guardarArchivoBase64(
-                file.path,
-                file.contentBase64,
-                Subir archivo multimedia ${ file.path }
+                },
+                400
             );
         }
 
-        await guardarArchivoTexto(
-            "src/data/config.json",
-            JSON.stringify(config, null, 2),
-            "Actualizar configuracion general"
+        await guardarArchivoBase64(
+            file.path,
+            file.contentBase64,
+            `Subir archivo multimedia ${file.path}`
         );
-
-        await guardarArchivoTexto(
-            "src/data/slides.json",
-            JSON.stringify(slides, null, 2),
-            "Actualizar slides desde panel admin"
-        );
-
-        return responder(res, 200, {
-            ok: true,
-            message: "Cambios guardados correctamente",
-        });
     }
 
-    return responder(res, 405, {
-        ok: false,
-        message: "Metodo no permitido",
+    await guardarArchivoTexto(
+        "src/data/config.json",
+        JSON.stringify(config, null, 2),
+        "Actualizar configuracion general"
+    );
+
+    await guardarArchivoTexto(
+        "src/data/slides.json",
+        JSON.stringify(slides, null, 2),
+        "Actualizar slides desde panel admin"
+    );
+
+    return json({
+        ok: true,
+        message: "Cambios guardados correctamente",
     });
-} catch (error) {
-    return responder(res, 500, {
-        ok: false,
-        message: error.message || "Error interno",
-    });
-}
-}
+};
+
+export default {
+    async fetch(request) {
+        try {
+            const variablesFaltantes = validarVariables();
+
+            if (variablesFaltantes.length > 0) {
+                return json(
+                    {
+                        ok: false,
+                        message: `Faltan variables en Vercel: ${variablesFaltantes.join(", ")}`,
+                    },
+                    500
+                );
+            }
+
+            if (!validarPassword(request)) {
+                return json(
+                    {
+                        ok: false,
+                        message: "Password incorrecto",
+                    },
+                    401
+                );
+            }
+
+            if (request.method === "GET") {
+                return await manejarGet();
+            }
+
+            if (request.method === "POST") {
+                return await manejarPost(request);
+            }
+
+            return json(
+                {
+                    ok: false,
+                    message: "Metodo no permitido",
+                },
+                405
+            );
+        } catch (error) {
+            return json(
+                {
+                    ok: false,
+                    message: error.message || "Error interno",
+                },
+                500
+            );
+        }
+    },
+};
