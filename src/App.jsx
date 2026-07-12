@@ -1,6 +1,10 @@
 ﻿import { useEffect, useState } from "react";
 import "./App.css";
 
+import fervientesImg from "./assets/eventos/fervientes.png";
+import horariosImg from "./assets/eventos/horarios.png";
+import vacacionalImg from "./assets/eventos/vacacional.png";
+
 const contactos = {
     cmb_general: "573185384697",
     escuela_biblica: "573176784539",
@@ -18,7 +22,7 @@ const slides = [
         id: 1,
         activo: true,
         tipo: "imagen",
-        url_recurso: "/media/fervientes.png",
+        url_recurso: fervientesImg,
         titulo: "Fervientes",
         subtitulo: "Campamento Juvenil 2026",
         descripcion:
@@ -32,7 +36,7 @@ const slides = [
         id: 2,
         activo: true,
         tipo: "imagen",
-        url_recurso: "/media/horarios.png",
+        url_recurso: horariosImg,
         titulo: "Horarios",
         subtitulo: "Servicios y actividades",
         descripcion:
@@ -46,7 +50,7 @@ const slides = [
         id: 3,
         activo: true,
         tipo: "imagen",
-        url_recurso: "/media/vacacional.png",
+        url_recurso: vacacionalImg,
         titulo: "Semana Vacacional",
         subtitulo: "Escuela biblica infantil",
         descripcion:
