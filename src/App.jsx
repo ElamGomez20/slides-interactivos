@@ -1,31 +1,31 @@
 ﻿import { useEffect, useState } from "react";
 import "./App.css";
-import slidesData from "./data/slides.json";
-import configData from "./data/config.json";
 import AdminPanel from "./components/AdminPanel";
+import { supabase } from "./lib/supabaseClient";
 
 const extensionesPermitidas = [".jpg", ".png", ".mp4"];
 const extensionesLogoPermitidas = [".jpg", ".png"];
 
-const esRecursoPermitido = (url) => {
+const contactosDefault = [
+    { id: "cmb_general", nombre: "CMB GENERAL", numero: "573185384697" },
+    { id: "escuela_biblica", nombre: "Escuela Biblica", numero: "573176784539" },
+    { id: "obra_social", nombre: "Obra Social", numero: "573113252349" },
+    { id: "jovenes", nombre: "Jovenes", numero: "573237049379" },
+];
+
+const esUrlPermitida = (url, extensiones) => {
     if (!url) return false;
 
     const archivo = url.toLowerCase().split("?")[0];
 
-    return extensionesPermitidas.some((extension) => archivo.endsWith(extension));
+    if (archivo.startsWith("http")) {
+        return extensiones.some((extension) => archivo.includes(extension));
+    }
+
+    return extensiones.some((extension) => archivo.endsWith(extension));
 };
 
-const esLogoPermitido = (url) => {
-    if (!url) return false;
-
-    const archivo = url.toLowerCase().split("?")[0];
-
-    return extensionesLogoPermitidas.some((extension) => archivo.endsWith(extension));
-};
-
-const obtenerContactoWhatsApp = (slide) => {
-    const contactos = configData.contactos_whatsapp || [];
-
+const obtenerContactoWhatsApp = (slide, contactos) => {
     const contactoEncontrado = contactos.find((contacto) => {
         return contacto.id === slide.contacto_whatsapp;
     });
@@ -41,12 +41,6 @@ const obtenerContactoWhatsApp = (slide) => {
     return "573185384697";
 };
 
-const slides = slidesData.slides.filter((slide) => {
-    const estaActivo = slide.activo !== false;
-
-    return estaActivo && esRecursoPermitido(slide.url_recurso);
-});
-
 function App() {
     if (window.location.pathname.startsWith("/admin")) {
         return <AdminPanel />;
@@ -56,13 +50,123 @@ function App() {
 }
 
 function PaginaPrincipal() {
+    const [config, setConfig] = useState({
+        titulo_sitio: "CMB EL CERRITO",
+        logo_url: "",
+    });
+
+    const [contactos, setContactos] = useState(contactosDefault);
+    const [slides, setSlides] = useState([]);
     const [slideActual, setSlideActual] = useState(0);
     const [detalleAbierto, setDetalleAbierto] = useState(false);
     const [direccion, setDireccion] = useState("derecha");
     const [touchInicio, setTouchInicio] = useState(null);
+    const [cargando, setCargando] = useState(true);
+    const [error, setError] = useState("");
 
-    const tituloSitio = configData.titulo_sitio || "CMB EL CERRITO";
-    const logoSitio = esLogoPermitido(configData.logo) ? configData.logo : "";
+    const cargarContenido = async () => {
+        try {
+            setError("");
+
+            const { data: configData, error: configError } = await supabase
+                .from("configuracion")
+                .select("*")
+                .eq("id", 1)
+                .single();
+
+            if (configError) {
+                throw configError;
+            }
+
+            const { data: contactosData, error: contactosError } = await supabase
+                .from("contactos_whatsapp")
+                .select("*")
+                .eq("activo", true)
+                .order("orden", { ascending: true });
+
+            if (contactosError) {
+                throw contactosError;
+            }
+
+            const { data: slidesData, error: slidesError } = await supabase
+                .from("slides")
+                .select("*")
+                .eq("activo", true)
+                .order("orden", { ascending: true });
+
+            if (slidesError) {
+                throw slidesError;
+            }
+
+            const slidesFiltrados = (slidesData || []).filter((slide) => {
+                return esUrlPermitida(slide.url_recurso, extensionesPermitidas);
+            });
+
+            setConfig(configData || {
+                titulo_sitio: "CMB EL CERRITO",
+                logo_url: "",
+            });
+
+            setContactos(contactosData && contactosData.length > 0 ? contactosData : contactosDefault);
+            setSlides(slidesFiltrados);
+            setSlideActual(0);
+        } catch (errorActual) {
+            setError(errorActual.message || "No se pudo cargar el contenido");
+        } finally {
+            setCargando(false);
+        }
+    };
+
+    useEffect(() => {
+        cargarContenido();
+
+        const canal = supabase
+            .channel("contenido-publico")
+            .on(
+                "postgres_changes",
+                { event: "*", schema: "public", table: "slides" },
+                () => cargarContenido()
+            )
+            .on(
+                "postgres_changes",
+                { event: "*", schema: "public", table: "configuracion" },
+                () => cargarContenido()
+            )
+            .on(
+                "postgres_changes",
+                { event: "*", schema: "public", table: "contactos_whatsapp" },
+                () => cargarContenido()
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(canal);
+        };
+    }, []);
+
+    useEffect(() => {
+        if (detalleAbierto) return;
+        if (slides.length === 0) return;
+
+        const intervalo = setInterval(() => {
+            setDireccion("derecha");
+
+            setSlideActual((actual) => {
+                if (actual === slides.length - 1) {
+                    return 0;
+                }
+
+                return actual + 1;
+            });
+        }, 15000);
+
+        return () => clearInterval(intervalo);
+    }, [detalleAbierto, slides.length]);
+
+    const tituloSitio = config.titulo_sitio || "CMB EL CERRITO";
+    const logoSitio = esUrlPermitida(config.logo_url, extensionesLogoPermitidas)
+        ? config.logo_url
+        : "";
 
     const cambiarSlide = (nuevoIndice, nuevaDireccion) => {
         setDireccion(nuevaDireccion);
@@ -89,25 +193,6 @@ function PaginaPrincipal() {
         }
     };
 
-    useEffect(() => {
-        if (detalleAbierto) return;
-        if (slides.length === 0) return;
-
-        const intervalo = setInterval(() => {
-            setDireccion("derecha");
-
-            setSlideActual((actual) => {
-                if (actual === slides.length - 1) {
-                    return 0;
-                }
-
-                return actual + 1;
-            });
-        }, 15000);
-
-        return () => clearInterval(intervalo);
-    }, [detalleAbierto]);
-
     const iniciarTouch = (event) => {
         setTouchInicio(event.touches[0].clientX);
     };
@@ -129,6 +214,54 @@ function PaginaPrincipal() {
         setTouchInicio(null);
     };
 
+    if (cargando) {
+        return (
+            <main className="app">
+                <section className="telefono">
+                    <div className="barra-superior">
+                        <div className="marca">
+                            {logoSitio && <img src={logoSitio} alt="Logo" />}
+                            <span>{tituloSitio}</span>
+                        </div>
+                        <span>Cargando</span>
+                    </div>
+
+                    <div className="zona-slide">
+                        <div className="contenido-slide">
+                            <span className="etiqueta">Un momento</span>
+                            <h1>Cargando contenido</h1>
+                            <p>Estamos preparando la informacion.</p>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        );
+    }
+
+    if (error) {
+        return (
+            <main className="app">
+                <section className="telefono">
+                    <div className="barra-superior">
+                        <div className="marca">
+                            {logoSitio && <img src={logoSitio} alt="Logo" />}
+                            <span>{tituloSitio}</span>
+                        </div>
+                        <span>Error</span>
+                    </div>
+
+                    <div className="zona-slide">
+                        <div className="contenido-slide">
+                            <span className="etiqueta">Aviso</span>
+                            <h1>No se pudo cargar</h1>
+                            <p>{error}</p>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        );
+    }
+
     if (slides.length === 0) {
         return (
             <main className="app">
@@ -146,8 +279,8 @@ function PaginaPrincipal() {
                             <span className="etiqueta">Aviso</span>
                             <h1>No hay slides disponibles</h1>
                             <p>
-                                Revisa que los slides esten activos y que los archivos sean .jpg,
-                                .png o .mp4.
+                                Entra al panel administrador y agrega una diapositiva activa con
+                                imagen .jpg, .png o video .mp4.
                             </p>
                         </div>
                     </div>
@@ -159,17 +292,17 @@ function PaginaPrincipal() {
     const slide = slides[slideActual];
 
     const abrirWhatsApp = () => {
-        const telefonoDestino = obtenerContactoWhatsApp(slide);
-        const mensaje = encodeURIComponent(slide.mensaje_whatsapp);
+        const telefonoDestino = obtenerContactoWhatsApp(slide, contactos);
+        const mensaje = encodeURIComponent(slide.mensaje_whatsapp || "Hola, quiero mas informacion.");
         const url = `https://wa.me/${telefonoDestino}?text=${mensaje}`;
 
         window.open(url, "_blank");
     };
 
     const renderRecurso = (clase) => {
-        const archivo = slide.url_recurso.toLowerCase();
+        const archivo = slide.url_recurso.toLowerCase().split("?")[0];
 
-        if (slide.tipo === "video" && archivo.endsWith(".mp4")) {
+        if (slide.tipo === "video" && archivo.includes(".mp4")) {
             return (
                 <video
                     className={clase}
@@ -184,7 +317,7 @@ function PaginaPrincipal() {
 
         if (
             slide.tipo === "imagen" &&
-            (archivo.endsWith(".jpg") || archivo.endsWith(".png"))
+            (archivo.includes(".jpg") || archivo.includes(".png"))
         ) {
             return <img className={clase} src={slide.url_recurso} alt={slide.titulo} />;
         }

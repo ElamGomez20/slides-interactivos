@@ -1,11 +1,12 @@
-﻿import { useState } from "react";
+﻿import { useEffect, useState } from "react";
 import "./AdminPanel.css";
+import { supabase } from "../lib/supabaseClient";
 
 const contactosDefault = [
-    { id: "cmb_general", nombre: "CMB GENERAL", numero: "573185384697" },
-    { id: "escuela_biblica", nombre: "Escuela Biblica", numero: "573176784539" },
-    { id: "obra_social", nombre: "Obra Social", numero: "573113252349" },
-    { id: "jovenes", nombre: "Jovenes", numero: "573237049379" },
+    { id: "cmb_general", nombre: "CMB GENERAL", numero: "573185384697", orden: 1, activo: true },
+    { id: "escuela_biblica", nombre: "Escuela Biblica", numero: "573176784539", orden: 2, activo: true },
+    { id: "obra_social", nombre: "Obra Social", numero: "573113252349", orden: 3, activo: true },
+    { id: "jovenes", nombre: "Jovenes", numero: "573237049379", orden: 4, activo: true },
 ];
 
 const extensionesPermitidas = [".jpg", ".png", ".mp4"];
@@ -25,50 +26,110 @@ const extensionValida = (nombre) => {
     return extensionesPermitidas.some((ext) => archivo.endsWith(ext));
 };
 
+const obtenerTipoArchivo = (nombre) => {
+    return nombre.toLowerCase().endsWith(".mp4") ? "video" : "imagen";
+};
+
 function AdminPanel() {
-    const [password, setPassword] = useState(sessionStorage.getItem("admin_password") || "");
+    const [email, setEmail] = useState(sessionStorage.getItem("admin_email") || "");
+    const [password, setPassword] = useState("");
     const [autenticado, setAutenticado] = useState(false);
     const [config, setConfig] = useState(null);
-    const [slidesData, setSlidesData] = useState(null);
-    const [mediaFiles, setMediaFiles] = useState([]);
+    const [contactos, setContactos] = useState(contactosDefault);
+    const [slides, setSlides] = useState([]);
     const [estado, setEstado] = useState("");
+    const [subiendoArchivo, setSubiendoArchivo] = useState(false);
+    const [guardando, setGuardando] = useState(false);
 
-    const cargarContenido = async () => {
-        setEstado("Cargando contenido...");
+    useEffect(() => {
+        verificarSesion();
+    }, []);
 
-        const respuesta = await fetch("/api/content", {
-            method: "GET",
-            headers: {
-                "x-admin-password": password,
-            },
-        });
+    const verificarSesion = async () => {
+        const { data } = await supabase.auth.getSession();
 
-        const data = await respuesta.json();
-
-        if (!data.ok) {
-            setEstado(data.message || "No se pudo iniciar sesion");
-            return;
+        if (data.session) {
+            setAutenticado(true);
+            cargarContenido();
         }
-
-        const configFinal = {
-            titulo_sitio: data.config.titulo_sitio || "CMB EL CERRITO",
-            logo: data.config.logo || "/media/logo.png",
-            contactos_whatsapp: data.config.contactos_whatsapp || contactosDefault,
-        };
-
-        setConfig(configFinal);
-        setSlidesData(data.slides);
-        setAutenticado(true);
-        sessionStorage.setItem("admin_password", password);
-        setEstado("Contenido cargado");
     };
 
-    const cerrarSesion = () => {
-        sessionStorage.removeItem("admin_password");
-        setPassword("");
+    const iniciarSesion = async () => {
+        try {
+            setEstado("Iniciando sesion...");
+
+            const { error } = await supabase.auth.signInWithPassword({
+                email,
+                password,
+            });
+
+            if (error) {
+                setEstado(error.message);
+                return;
+            }
+
+            sessionStorage.setItem("admin_email", email);
+            setAutenticado(true);
+            setPassword("");
+            await cargarContenido();
+        } catch (errorActual) {
+            setEstado(errorActual.message || "No se pudo iniciar sesion");
+        }
+    };
+
+    const cerrarSesion = async () => {
+        await supabase.auth.signOut();
         setAutenticado(false);
         setConfig(null);
-        setSlidesData(null);
+        setContactos(contactosDefault);
+        setSlides([]);
+        setEstado("");
+    };
+
+    const cargarContenido = async () => {
+        try {
+            setEstado("Cargando contenido...");
+
+            const { data: configData, error: configError } = await supabase
+                .from("configuracion")
+                .select("*")
+                .eq("id", 1)
+                .single();
+
+            if (configError) {
+                throw configError;
+            }
+
+            const { data: contactosData, error: contactosError } = await supabase
+                .from("contactos_whatsapp")
+                .select("*")
+                .order("orden", { ascending: true });
+
+            if (contactosError) {
+                throw contactosError;
+            }
+
+            const { data: slidesData, error: slidesError } = await supabase
+                .from("slides")
+                .select("*")
+                .order("orden", { ascending: true });
+
+            if (slidesError) {
+                throw slidesError;
+            }
+
+            setConfig(configData || {
+                id: 1,
+                titulo_sitio: "CMB EL CERRITO",
+                logo_url: "",
+            });
+
+            setContactos(contactosData && contactosData.length > 0 ? contactosData : contactosDefault);
+            setSlides(slidesData || []);
+            setEstado("Contenido cargado");
+        } catch (errorActual) {
+            setEstado(errorActual.message || "No se pudo cargar contenido");
+        }
     };
 
     const actualizarConfig = (campo, valor) => {
@@ -79,163 +140,225 @@ function AdminPanel() {
     };
 
     const actualizarContacto = (index, campo, valor) => {
-        const contactos = [...config.contactos_whatsapp];
+        const nuevosContactos = [...contactos];
 
-        contactos[index] = {
-            ...contactos[index],
+        nuevosContactos[index] = {
+            ...nuevosContactos[index],
             [campo]: valor,
         };
 
-        setConfig({
-            ...config,
-            contactos_whatsapp: contactos,
-        });
+        setContactos(nuevosContactos);
     };
 
     const actualizarSlide = (index, campo, valor) => {
-        const slides = [...slidesData.slides];
+        const nuevosSlides = [...slides];
 
-        slides[index] = {
-            ...slides[index],
+        nuevosSlides[index] = {
+            ...nuevosSlides[index],
             [campo]: valor,
         };
 
-        setSlidesData({
-            ...slidesData,
-            slides,
-        });
+        setSlides(nuevosSlides);
+    };
+
+    const subirArchivo = async (file) => {
+        if (!file) return null;
+
+        const nombreLimpio = limpiarNombreArchivo(file.name);
+
+        if (!extensionValida(nombreLimpio)) {
+            alert("Solo se permiten archivos .jpg, .png o .mp4");
+            return null;
+        }
+
+        setSubiendoArchivo(true);
+        setEstado("Subiendo archivo a Supabase...");
+
+        const ruta = `uploads/${Date.now()}-${nombreLimpio}`;
+
+        const { error } = await supabase.storage
+            .from("multimedia")
+            .upload(ruta, file, {
+                cacheControl: "3600",
+                upsert: false,
+            });
+
+        if (error) {
+            setSubiendoArchivo(false);
+            setEstado(error.message);
+            return null;
+        }
+
+        const { data } = supabase.storage
+            .from("multimedia")
+            .getPublicUrl(ruta);
+
+        setSubiendoArchivo(false);
+        setEstado("Archivo subido correctamente");
+
+        return {
+            url: data.publicUrl,
+            tipo: obtenerTipoArchivo(nombreLimpio),
+        };
+    };
+
+    const cambiarLogo = async (file) => {
+        if (!file) return;
+
+        const nombreLimpio = limpiarNombreArchivo(file.name);
+
+        if (!nombreLimpio.endsWith(".jpg") && !nombreLimpio.endsWith(".png")) {
+            alert("El logo solo puede ser .jpg o .png");
+            return;
+        }
+
+        const archivoSubido = await subirArchivo(file);
+
+        if (!archivoSubido) return;
+
+        actualizarConfig("logo_url", archivoSubido.url);
+    };
+
+    const cambiarArchivoSlide = async (index, file) => {
+        if (!file) return;
+
+        const archivoSubido = await subirArchivo(file);
+
+        if (!archivoSubido) return;
+
+        actualizarSlide(index, "url_recurso", archivoSubido.url);
+        actualizarSlide(index, "tipo", archivoSubido.tipo);
     };
 
     const agregarSlide = () => {
-        const slides = slidesData.slides || [];
-        const siguienteId = slides.length > 0 ? Math.max(...slides.map((s) => Number(s.id))) + 1 : 1;
+        const siguienteOrden = slides.length > 0
+            ? Math.max(...slides.map((slide) => Number(slide.orden || 0))) + 1
+            : 1;
 
         const nuevoSlide = {
-            id: siguienteId,
+            id: null,
             activo: true,
             tipo: "imagen",
-            url_recurso: "/media/slide-nuevo.jpg",
+            url_recurso: "",
             titulo: "Nuevo slide",
             subtitulo: "Subtitulo del slide",
             descripcion: "Descripcion del contenido.",
             mensaje_whatsapp: "Hola, quiero recibir mas informacion.",
             contacto_whatsapp: "cmb_general",
             etiqueta: "Nuevo",
+            orden: siguienteOrden,
         };
 
-        setSlidesData({
-            ...slidesData,
-            slides: [...slides, nuevoSlide],
-        });
+        setSlides([...slides, nuevoSlide]);
     };
 
-    const eliminarSlide = (index) => {
+    const eliminarSlide = async (index) => {
+        const slide = slides[index];
         const confirmar = window.confirm("Seguro que quieres eliminar este slide?");
 
         if (!confirmar) return;
 
-        const slides = slidesData.slides.filter((_, i) => i !== index);
+        if (slide.id) {
+            const { error } = await supabase
+                .from("slides")
+                .delete()
+                .eq("id", slide.id);
 
-        setSlidesData({
-            ...slidesData,
-            slides,
-        });
-    };
-
-    const convertirArchivoABase64 = (file) => {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-
-            reader.onload = () => {
-                const resultado = reader.result;
-                const base64 = resultado.split(",")[1];
-
-                resolve(base64);
-            };
-
-            reader.onerror = reject;
-            reader.readAsDataURL(file);
-        });
-    };
-
-    const cambiarLogo = async (file) => {
-        if (!file) return;
-
-        const nombre = limpiarNombreArchivo(file.name);
-
-        if (!nombre.endsWith(".jpg") && !nombre.endsWith(".png")) {
-            alert("El logo solo puede ser .jpg o .png");
-            return;
+            if (error) {
+                setEstado(error.message);
+                return;
+            }
         }
 
-        const contentBase64 = await convertirArchivoABase64(file);
-        const path = `public/media/${Date.now()}-${nombre}`;
-        const publicPath = path.replace("public", "");
-
-        setMediaFiles((actuales) => [
-            ...actuales,
-            {
-                path,
-                contentBase64,
-            },
-        ]);
-
-        actualizarConfig("logo", publicPath);
-    };
-
-    const cambiarArchivoSlide = async (index, file) => {
-        if (!file) return;
-
-        const nombre = limpiarNombreArchivo(file.name);
-
-        if (!extensionValida(nombre)) {
-            alert("Solo se permiten archivos .jpg, .png o .mp4");
-            return;
-        }
-
-        const contentBase64 = await convertirArchivoABase64(file);
-        const path = `public/media/${Date.now()}-${nombre}`;
-        const publicPath = path.replace("public", "");
-
-        const tipo = nombre.endsWith(".mp4") ? "video" : "imagen";
-
-        setMediaFiles((actuales) => [
-            ...actuales,
-            {
-                path,
-                contentBase64,
-            },
-        ]);
-
-        actualizarSlide(index, "url_recurso", publicPath);
-        actualizarSlide(index, "tipo", tipo);
+        const nuevosSlides = slides.filter((_, i) => i !== index);
+        setSlides(nuevosSlides);
+        setEstado("Slide eliminado");
     };
 
     const guardarCambios = async () => {
-        setEstado("Guardando cambios...");
+        try {
+            if (subiendoArchivo) {
+                setEstado("Espera a que termine de subir el archivo");
+                return;
+            }
 
-        const respuesta = await fetch("/api/content", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "x-admin-password": password,
-            },
-            body: JSON.stringify({
-                config,
-                slides: slidesData,
-                mediaFiles,
-            }),
-        });
+            setGuardando(true);
+            setEstado("Guardando cambios...");
 
-        const data = await respuesta.json();
+            const { error: configError } = await supabase
+                .from("configuracion")
+                .upsert({
+                    id: 1,
+                    titulo_sitio: config.titulo_sitio || "CMB EL CERRITO",
+                    logo_url: config.logo_url || "",
+                    updated_at: new Date().toISOString(),
+                });
 
-        if (!data.ok) {
-            setEstado(data.message || "No se pudo guardar");
-            return;
+            if (configError) {
+                throw configError;
+            }
+
+            const contactosParaGuardar = contactos.map((contacto, index) => ({
+                id: contacto.id,
+                nombre: contacto.nombre,
+                numero: contacto.numero,
+                orden: index + 1,
+                activo: contacto.activo !== false,
+                updated_at: new Date().toISOString(),
+            }));
+
+            const { error: contactosError } = await supabase
+                .from("contactos_whatsapp")
+                .upsert(contactosParaGuardar);
+
+            if (contactosError) {
+                throw contactosError;
+            }
+
+            for (let i = 0; i < slides.length; i++) {
+                const slide = slides[i];
+
+                const slideParaGuardar = {
+                    activo: slide.activo !== false,
+                    tipo: slide.tipo || "imagen",
+                    url_recurso: slide.url_recurso || "",
+                    titulo: slide.titulo || "Sin titulo",
+                    subtitulo: slide.subtitulo || "",
+                    descripcion: slide.descripcion || "",
+                    mensaje_whatsapp: slide.mensaje_whatsapp || "",
+                    contacto_whatsapp: slide.contacto_whatsapp || "cmb_general",
+                    etiqueta: slide.etiqueta || "",
+                    orden: Number(slide.orden || i + 1),
+                    updated_at: new Date().toISOString(),
+                };
+
+                if (slide.id) {
+                    const { error } = await supabase
+                        .from("slides")
+                        .update(slideParaGuardar)
+                        .eq("id", slide.id);
+
+                    if (error) {
+                        throw error;
+                    }
+                } else {
+                    const { error } = await supabase
+                        .from("slides")
+                        .insert(slideParaGuardar);
+
+                    if (error) {
+                        throw error;
+                    }
+                }
+            }
+
+            await cargarContenido();
+            setEstado("Cambios guardados correctamente. La pagina ya puede mostrar la informacion actualizada.");
+        } catch (errorActual) {
+            setEstado(errorActual.message || "No se pudo guardar");
+        } finally {
+            setGuardando(false);
         }
-
-        setMediaFiles([]);
-        setEstado("Cambios guardados. Espera 1 o 2 minutos mientras Vercel actualiza la pagina.");
     };
 
     if (!autenticado) {
@@ -243,7 +366,14 @@ function AdminPanel() {
             <main className="admin-page">
                 <section className="admin-login">
                     <h1>Panel Administrador</h1>
-                    <p>Ingresa la contrasena configurada en Vercel.</p>
+                    <p>Ingresa con el usuario creado en Supabase Authentication.</p>
+
+                    <input
+                        type="email"
+                        placeholder="Correo del administrador"
+                        value={email}
+                        onChange={(event) => setEmail(event.target.value)}
+                    />
 
                     <input
                         type="password"
@@ -252,7 +382,7 @@ function AdminPanel() {
                         onChange={(event) => setPassword(event.target.value)}
                     />
 
-                    <button onClick={cargarContenido}>Entrar</button>
+                    <button onClick={iniciarSesion}>Entrar</button>
 
                     {estado && <span className="admin-estado">{estado}</span>}
                 </section>
@@ -265,7 +395,7 @@ function AdminPanel() {
             <section className="admin-header">
                 <div>
                     <h1>Panel Administrador</h1>
-                    <p>Edita la informacion, contactos y archivos multimedia.</p>
+                    <p>Edita informacion, contactos, imagenes y videos desde Supabase.</p>
                 </div>
 
                 <button className="btn-secundario" onClick={cerrarSesion}>
@@ -279,7 +409,7 @@ function AdminPanel() {
                 <label>
                     Titulo del sitio
                     <input
-                        value={config.titulo_sitio}
+                        value={config?.titulo_sitio || ""}
                         onChange={(event) => actualizarConfig("titulo_sitio", event.target.value)}
                     />
                 </label>
@@ -293,13 +423,13 @@ function AdminPanel() {
                     />
                 </label>
 
-                {config.logo && <p className="ruta-archivo">Logo actual: {config.logo}</p>}
+                {config?.logo_url && <p className="ruta-archivo">Logo actual: {config.logo_url}</p>}
             </section>
 
             <section className="admin-card">
                 <h2>Contactos de WhatsApp</h2>
 
-                {config.contactos_whatsapp.map((contacto, index) => (
+                {contactos.map((contacto, index) => (
                     <div className="contacto-grid" key={contacto.id}>
                         <label>
                             Area
@@ -326,8 +456,8 @@ function AdminPanel() {
                     <button onClick={agregarSlide}>Agregar slide</button>
                 </div>
 
-                {slidesData.slides.map((slide, index) => (
-                    <article className="slide-editor" key={slide.id}>
+                {slides.map((slide, index) => (
+                    <article className="slide-editor" key={slide.id || `nuevo-${index}`}>
                         <div className="slide-editor-header">
                             <h3>{slide.titulo || "Slide sin titulo"}</h3>
 
@@ -354,12 +484,21 @@ function AdminPanel() {
                             />
                         </label>
 
-                        <p className="ruta-archivo">Archivo actual: {slide.url_recurso}</p>
+                        <p className="ruta-archivo">Archivo actual: {slide.url_recurso || "Sin archivo"}</p>
+
+                        <label>
+                            Orden
+                            <input
+                                type="number"
+                                value={slide.orden || index + 1}
+                                onChange={(event) => actualizarSlide(index, "orden", Number(event.target.value))}
+                            />
+                        </label>
 
                         <label>
                             Titulo
                             <input
-                                value={slide.titulo}
+                                value={slide.titulo || ""}
                                 onChange={(event) => actualizarSlide(index, "titulo", event.target.value)}
                             />
                         </label>
@@ -367,7 +506,7 @@ function AdminPanel() {
                         <label>
                             Subtitulo
                             <input
-                                value={slide.subtitulo}
+                                value={slide.subtitulo || ""}
                                 onChange={(event) => actualizarSlide(index, "subtitulo", event.target.value)}
                             />
                         </label>
@@ -375,7 +514,7 @@ function AdminPanel() {
                         <label>
                             Descripcion
                             <textarea
-                                value={slide.descripcion}
+                                value={slide.descripcion || ""}
                                 onChange={(event) => actualizarSlide(index, "descripcion", event.target.value)}
                             />
                         </label>
@@ -383,7 +522,7 @@ function AdminPanel() {
                         <label>
                             Mensaje de WhatsApp
                             <textarea
-                                value={slide.mensaje_whatsapp}
+                                value={slide.mensaje_whatsapp || ""}
                                 onChange={(event) => actualizarSlide(index, "mensaje_whatsapp", event.target.value)}
                             />
                         </label>
@@ -394,7 +533,7 @@ function AdminPanel() {
                                 value={slide.contacto_whatsapp || "cmb_general"}
                                 onChange={(event) => actualizarSlide(index, "contacto_whatsapp", event.target.value)}
                             >
-                                {config.contactos_whatsapp.map((contacto) => (
+                                {contactos.map((contacto) => (
                                     <option value={contacto.id} key={contacto.id}>
                                         {contacto.nombre}
                                     </option>
@@ -405,7 +544,7 @@ function AdminPanel() {
                         <label>
                             Etiqueta
                             <input
-                                value={slide.etiqueta}
+                                value={slide.etiqueta || ""}
                                 onChange={(event) => actualizarSlide(index, "etiqueta", event.target.value)}
                             />
                         </label>
@@ -414,7 +553,10 @@ function AdminPanel() {
             </section>
 
             <section className="guardar-flotante">
-                <button onClick={guardarCambios}>Guardar cambios</button>
+                <button onClick={guardarCambios} disabled={subiendoArchivo || guardando}>
+                    {subiendoArchivo ? "Subiendo archivo..." : guardando ? "Guardando..." : "Guardar cambios"}
+                </button>
+
                 {estado && <span>{estado}</span>}
             </section>
         </main>
