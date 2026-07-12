@@ -26,62 +26,76 @@ button {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 18px;
+    padding: 14px;
 }
 
 .telefono {
     width: 100%;
     max-width: 430px;
-    min-height: 92vh;
-    border-radius: 32px;
-    padding: 18px;
-    background: rgba(10, 18, 32, 0.92);
+    min-height: 94vh;
+    border-radius: 30px;
+    padding: 16px;
+    background: rgba(10, 18, 32, 0.94);
     border: 1px solid rgba(255, 255, 255, 0.14);
     box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 14px;
 }
 
 .barra-superior {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    color: #c9d6ea;
+    color: #ffffff;
     font-size: 14px;
+    gap: 12px;
 }
+
+.marca {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    min-width: 0;
+}
+
+    .marca img {
+        width: 34px;
+        height: 34px;
+        border-radius: 999px;
+        object-fit: cover;
+        background: white;
+    }
+
+    .marca span {
+        font-weight: 900;
+        letter-spacing: 0.4px;
+        color: #ffffff;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
 
 .zona-slide {
     flex: 1;
     border: none;
     border-radius: 28px;
-    padding: 16px;
+    padding: 14px;
     text-align: left;
     color: white;
-    background: linear-gradient(160deg, rgba(40, 110, 255, 0.85), rgba(20, 24, 44, 0.95)), radial-gradient(circle at top right, rgba(255, 255, 255, 0.28), transparent 30%);
+    background: linear-gradient(160deg, rgba(40, 110, 255, 0.85), rgba(20, 24, 44, 0.95));
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
     cursor: pointer;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    min-height: 560px;
+    min-height: 610px;
     overflow: hidden;
 }
 
     .zona-slide:active {
         transform: scale(0.99);
     }
-
-.etiqueta {
-    width: fit-content;
-    padding: 8px 12px;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.16);
-    color: #ffffff;
-    font-size: 13px;
-    font-weight: 700;
-    letter-spacing: 0.2px;
-}
 
 .slide-media,
 .detalle-media {
@@ -93,13 +107,19 @@ button {
 
 .slide-media {
     flex: 1;
-    min-height: 360px;
+    min-height: 450px;
     margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .detalle-media {
-    min-height: 260px;
+    min-height: 420px;
     margin: 24px 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .media-slide,
@@ -107,15 +127,18 @@ button {
     width: 100%;
     height: 100%;
     display: block;
-    object-fit: cover;
+    object-fit: contain;
+    background: rgba(0, 0, 0, 0.18);
 }
 
 .media-slide {
-    min-height: 360px;
+    min-height: 450px;
+    max-height: 520px;
 }
 
 .media-detalle {
-    min-height: 260px;
+    min-height: 420px;
+    max-height: 620px;
 }
 
 .contenido-slide {
@@ -124,18 +147,30 @@ button {
     gap: 10px;
 }
 
-    .contenido-slide h1 {
-        margin: 0;
-        font-size: 34px;
-        line-height: 1.05;
-    }
+.etiqueta {
+    width: fit-content;
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.16);
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.2px;
+}
 
-    .contenido-slide p {
-        margin: 0;
-        color: #dce8ff;
-        font-size: 17px;
-        line-height: 1.4;
-    }
+.contenido-slide h1 {
+    margin: 0;
+    font-size: 30px;
+    line-height: 1.05;
+    color: white;
+}
+
+.contenido-slide p {
+    margin: 0;
+    color: #dce8ff;
+    font-size: 16px;
+    line-height: 1.35;
+}
 
 .controles {
     display: grid;
@@ -150,7 +185,7 @@ button {
         padding: 13px 10px;
         background: rgba(255, 255, 255, 0.10);
         color: white;
-        font-weight: 700;
+        font-weight: 800;
         cursor: pointer;
     }
 
@@ -190,7 +225,7 @@ button {
 .detalle {
     width: 100%;
     max-width: 430px;
-    min-height: 92vh;
+    min-height: 94vh;
     display: flex;
     flex-direction: column;
     gap: 14px;
@@ -210,24 +245,29 @@ button {
     box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
 }
 
-    .detalle-card h1 {
-        margin: 18px 0 8px;
-        font-size: 32px;
-        line-height: 1.1;
-    }
+.marca-detalle {
+    margin-bottom: 18px;
+}
 
-    .detalle-card h2 {
-        margin: 0 0 14px;
-        color: #c9d6ea;
-        font-size: 18px;
-        font-weight: 500;
-    }
+.detalle-card h1 {
+    margin: 18px 0 8px;
+    font-size: 32px;
+    line-height: 1.1;
+    color: white;
+}
 
-    .detalle-card p {
-        color: #dce8ff;
-        font-size: 17px;
-        line-height: 1.55;
-    }
+.detalle-card h2 {
+    margin: 0 0 14px;
+    color: #c9d6ea;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.detalle-card p {
+    color: #dce8ff;
+    font-size: 17px;
+    line-height: 1.55;
+}
 
 .btn-whatsapp {
     width: 100%;
@@ -238,74 +278,8 @@ button {
     background: #25d366;
     color: #06120a;
     font-size: 16px;
-    font-weight: 800;
+    font-weight: 900;
     cursor: pointer;
-}
-
-@media (max-width: 420px) {
-    .app {
-        padding: 10px;
-    }
-
-    .telefono,
-    .detalle {
-        min-height: 96vh;
-        border-radius: 26px;
-        padding: 14px;
-    }
-
-    .zona-slide {
-        min-height: 540px;
-        border-radius: 24px;
-    }
-
-    .contenido-slide h1 {
-        font-size: 30px;
-    }
-
-    .contenido-slide p {
-        font-size: 16px;
-    }
-
-    .controles button {
-        font-size: 13px;
-        padding: 12px 8px;
-    }
-}
-
-@media (min-width: 900px) {
-    .telefono,
-    .detalle {
-        max-width: 460px;
-    }
-}
-
-.marca {
-    display: flex;
-    align-items: center;
-    gap: 9px;
-    min-width: 0;
-}
-
-    .marca img {
-        width: 34px;
-        height: 34px;
-        border-radius: 999px;
-        object-fit: cover;
-        background: white;
-    }
-
-    .marca span {
-        font-weight: 800;
-        letter-spacing: 0.3px;
-        color: #ffffff;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-.marca-detalle {
-    margin-bottom: 18px;
 }
 
 .animacion-derecha {
@@ -337,5 +311,52 @@ button {
     to {
         opacity: 1;
         transform: translateX(0) scale(1);
+    }
+}
+
+@media (max-width: 420px) {
+    .app {
+        padding: 8px;
+    }
+
+    .telefono,
+    .detalle {
+        min-height: 96vh;
+        border-radius: 24px;
+        padding: 12px;
+    }
+
+    .zona-slide {
+        min-height: 570px;
+        border-radius: 22px;
+    }
+
+    .slide-media {
+        min-height: 410px;
+    }
+
+    .media-slide {
+        min-height: 410px;
+        max-height: 480px;
+    }
+
+    .contenido-slide h1 {
+        font-size: 27px;
+    }
+
+    .contenido-slide p {
+        font-size: 15px;
+    }
+
+    .controles button {
+        font-size: 13px;
+        padding: 12px 8px;
+    }
+}
+
+@media (min-width: 900px) {
+    .telefono,
+    .detalle {
+        max-width: 460px;
     }
 }
